@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <meta name="description" content="Eric is a programmer based in Brooklyn.">
+    <title>Eric Buth</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=block&text='.BEIMabcdegiklmnoprsy"
+        rel="stylesheet">
+    <style>
+        body {
+            background-color: rgb(255, 255, 255);
+            color: rgb(20, 20, 20);
+        }
+
+        #message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-right: -50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Roboto Condensed', sans-serif;
+            font-weight: 400;
+        }
+
+        #name,
+        #about {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+
+        #name {
+            font-size: 26pt;
+        }
+
+        #about {
+            font-size: 20pt;
+            line-height: 1.25;
+        }
+
+        a {
+            text-decoration: none;
+            color: #4d994d;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        span {
+            white-space: nowrap;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: rgb(44, 44, 44);
+                color: rgb(221, 221, 221);
+            }
+
+            a {
+                color: #73e573;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="message">
+        <div id="name">
+            My name is Eric.
+        </div>
+        <div id="about">
+            I'm a <a href="https://github.com/buth">programmer</a> based <span>in Brooklyn</span>.
+        </div>
+    </div>
+</body>
+
+</html>
