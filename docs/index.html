@@ -2,59 +2,89 @@
 <html lang="en">
 
 <head>
+    <title>Eric Buth - Software Engineer in NYC</title>
+    <meta name="description"
+        content="A Brooklyn-based software engineer specializing in Go, microservice architectures, and infrastructure. Years of experience building scalable backend systems at Etsy, The New York Times, and elsewhere.">
+    <meta name="robots" content="index, follow">
+    <meta name="canonical" href="https://buth.dev/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="description" content="A software engineer based in Brooklyn.">
-    <title>E Buth</title>
+    <meta name="language" content="en">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather&display=block&text=:.@/abcdefghiklmnoprstuvy" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans" rel="stylesheet">
     <style>
         body {
             background-color: rgb(47, 47, 47);
-            color: rgb(20, 20, 20);
-            font-family: "Merriweather", serif;
+            color: rgb(179, 164, 150);
+            font-family: "IBM Plex Sans", sans-serif;
+            font-optical-sizing: auto;
             font-weight: 400;
             font-style: normal;
-            font-size: 16pt;
-            line-height: 1.8;
+            font-variation-settings:
+                "wdth" 100;
+            font-size: 14pt;
+            line-height: 1.6;
         }
 
-        #message {
+        main {
             position: absolute;
             top: 50%;
             left: 50%;
             margin-right: -50%;
             transform: translate(-50%, -50%);
+            max-width: 410px;
         }
 
-        #about {
-            list-style: none;
-            padding: 0;
+        header {
+            color: rgb(179, 164, 150, .5);
         }
 
-        a::before {
-            content: "https://";
-            opacity: .5;
+        header,
+        section {
+            padding: 0 10px;
+        }
+
+        h1 {
+            font-size: 28pt;
+            color: rgb(179, 164, 150, .3);
+            padding: 0px;
+            margin: 0px;
+            font-weight: 400;
         }
 
         a {
             text-decoration: none;
-            color: rgb(179, 164, 150);
-            display: block;
-        }
-
-        a:after {
-            opacity: .5;
+            color: rgb(179, 164, 150, .7);
             transition: 200ms;
         }
 
-        a:hover::after {
-            opacity: 1
+        a:hover {
+            color: rgb(179, 164, 150);
+        }
+
+        #links {
+            list-style: none;
+            padding: 0;
+            border-left: 3px solid rgb(179, 164, 150, .3);
+            padding-left: 14px;
+        }
+
+        #links a:after {
+            color: rgb(179, 164, 150, .3);
+            transition: 200ms;
+        }
+
+        #links a:hover::after {
+            color: rgb(179, 164, 150);
         }
 
         #github:after {
             content: ".com/buth";
+        }
+
+        #linkedin:after {
+            content: ".com/in/ebuth";
         }
 
         #bsky:after {
@@ -64,22 +94,28 @@
         #hachyderm:after {
             content: ".io/@buth";
         }
-
-        #linkedin:after {
-            content: ".com/in/ebuth";
-        }
     </style>
 </head>
 
 <body>
-    <nav id="message">
-        <ul id="about">
-            <li><a id="github" href="https://github.com/buth">github</a></li>
-            <li><a id="linkedin" href="https://www.linkedin.com/in/ebuth/">linkedin</a></li>
-            <li><a id="bsky" href="https://bsky.app/profile/buth.dev">bsky</a></li>
-            <li><a id="hachyderm" href="https://hachyderm.io/@buth">hachyderm</a></li>
-        </ul>
-    </nav>
+    <main>
+        <header>
+            <h1>Eric Buth</h1>
+            <p>A Brooklyn-based software engineer specializing in <a href="https://go.dev/">Go</a>, microservice
+                architectures, and infrastructure. Years of
+                experience building scalable backend systems at <a href="https://www.etsy.com/">Etsy</a>, <a
+                    href="https://www.nytimes.com/">The New York Times</a>, and <a
+                    href="https://www.linkedin.com/in/ebuth/">elsewhere</a>.</p>
+        </header>
+        <section>
+            <ul id="links">
+                <li><a id="github" href="https://github.com/buth">github</a></li>
+                <li><a id="linkedin" href="https://www.linkedin.com/in/ebuth/">linkedin</a></li>
+                <li><a id="bsky" href="https://bsky.app/profile/buth.dev">bsky</a></li>
+                <li><a id="hachyderm" href="https://hachyderm.io/@buth">hachyderm</a></li>
+            </ul>
+        </section>
+    </main>
 </body>
 
 </html>
