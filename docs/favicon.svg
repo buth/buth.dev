@@ -1,0 +1,15 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+	<style>
+		path {
+			fill: rgb(47, 47, 47);
+			stroke: rgb(47, 47, 47);
+		}
+		@media (prefers-color-scheme: dark) {
+			path {
+				fill: rgb(210, 191, 172);
+				stroke: rgb(210, 191, 172);
+			}
+		}
+	</style>
+	<path d="M 9 19 V 47 H 28 V 42 H 15 V 35 H 26 V 31 H 15 V 24 H 28 V 19 Z M 33 19 V 47 H 46 C 56 48, 58 32, 47 32 C 56 32, 55 19, 46 19 Z M 39 24 V 31 H 44 C 49 31, 48 24, 45 24 Z M 39 35 V 42 H 45 C 49 42, 49 35, 45 35 Z" fill-rule="evenodd" stroke-linejoin="round" stroke-width="1" />
+</svg>
