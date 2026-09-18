@@ -1,0 +1,5 @@
+.DS_Store
+
+# Scratch space assets/build.py creates next to the repo so its renames stay on
+# one filesystem. It cleans up after itself; this only catches a hard crash.
+.build-*/

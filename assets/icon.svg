@@ -1,0 +1,14 @@
+<!--
+  Raster master for favicon.ico. Deliberately NOT the same file as
+  docs/favicon.svg: that one inverts via prefers-color-scheme, which librsvg
+  does not evaluate, so rasterizing it yields a near-black glyph on transparent
+  (invisible in a dark tab strip). Raster fallbacks are consumed by contexts
+  that cannot adapt to a theme, so this variant is opaque and fixed: tan glyph
+  on the site's dark ground, legible against any background.
+-->
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+	<rect width="64" height="64" fill="rgb(47, 47, 47)" />
+	<path d="M 9 19 V 47 H 28 V 42 H 15 V 35 H 26 V 31 H 15 V 24 H 28 V 19 Z M 33 19 V 47 H 46 C 56 48, 58 32, 47 32 C 56 32, 55 19, 46 19 Z M 39 24 V 31 H 44 C 49 31, 48 24, 45 24 Z M 39 35 V 42 H 45 C 49 42, 49 35, 45 35 Z"
+		fill="rgb(210, 191, 172)" stroke="rgb(210, 191, 172)" fill-rule="evenodd" stroke-linejoin="round"
+		stroke-width="1" />
+</svg>

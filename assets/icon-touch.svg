@@ -1,0 +1,18 @@
+<!--
+  Raster master for apple-touch-icon.png. Same opaque treatment as icon.svg,
+  but the monogram is scaled to ~62% of the canvas and re-centered: iOS applies
+  its own rounded-rect mask and expects more margin than a favicon needs.
+
+  The transform is derived from the measured ink bounds of icon.svg, which are
+  x[8.50,54.90] y[18.50,47.50] in viewBox units - center (31.70, 33.00), and
+  note that is NOT the canvas center, so the glyph needs recentering as well as
+  scaling. scale = 0.85; translate = 32 - 0.85 * center.
+-->
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+	<rect width="64" height="64" fill="rgb(47, 47, 47)" />
+	<g transform="translate(5.055 3.95) scale(0.85)">
+		<path d="M 9 19 V 47 H 28 V 42 H 15 V 35 H 26 V 31 H 15 V 24 H 28 V 19 Z M 33 19 V 47 H 46 C 56 48, 58 32, 47 32 C 56 32, 55 19, 46 19 Z M 39 24 V 31 H 44 C 49 31, 48 24, 45 24 Z M 39 35 V 42 H 45 C 49 42, 49 35, 45 35 Z"
+			fill="rgb(210, 191, 172)" stroke="rgb(210, 191, 172)" fill-rule="evenodd" stroke-linejoin="round"
+			stroke-width="1" />
+	</g>
+</svg>

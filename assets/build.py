@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "brotli>=1.2.0",      # fontTools needs it to decompress the WOFF2
+#     "fonttools>=4.65.0",
+#     "uharfbuzz>=0.56.1",
+# ]
+# ///
+"""Regenerate every binary asset in docs/ from the sources in this directory.
+
+    uv run assets/build.py
+
+Dependencies are declared inline above (PEP 723) and pinned exactly in
+build.py.lock, so uv builds the same environment every time without a
+virtualenv to create or activate. After editing the dependency list, re-pin
+with:
+
+    uv lock --script assets/build.py
+
+The one dependency uv cannot supply is rsvg-convert (brew install librsvg),
+which rasterizes the SVGs. Both it and uv are one-time local tools; the site
+has no build step, and nothing here runs at deploy time.
+
+Produces:
+    assets/og.svg             text baked to outlines, so it needs no font
+    docs/og.png               1200x630 link-preview card
+    docs/apple-touch-icon.png 180x180, opaque
+    docs/favicon.ico          16 + 32 + 48, opaque
+
+Why the text is baked to outlines: librsvg on macOS resolves fonts through
+CoreText, not fontconfig, so a <text> element referencing "IBM Plex Sans"
+renders as tofu unless the face is installed system-wide. Outlining the glyphs
+from the WOFF2 the site already ships removes that dependency entirely and
+guarantees the card is typeset in the exact face visitors see.
+"""
+
+import io
+import os
+import pathlib
+import struct
+import subprocess
+import tempfile
+
+import uharfbuzz as hb
+from fontTools.misc.transform import Transform
+from fontTools.pens.svgPathPen import SVGPathPen
+from fontTools.pens.transformPen import TransformPen
+from fontTools.ttLib import TTFont
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+ASSETS = ROOT / "assets"
+DOCS = ROOT / "docs"
+WOFF2 = DOCS / "fonts" / "ibm-plex-sans-latin-400.woff2"
+
+WIDTH, HEIGHT = 1200, 630
+INK = "rgb(210, 191, 172)"
+GROUND = "rgb(47, 47, 47)"
+
+# The monogram, lifted verbatim from docs/favicon.svg.
+MONOGRAM = (
+    "M 9 19 V 47 H 28 V 42 H 15 V 35 H 26 V 31 H 15 V 24 H 28 V 19 Z "
+    "M 33 19 V 47 H 46 C 56 48, 58 32, 47 32 C 56 32, 55 19, 46 19 Z "
+    "M 39 24 V 31 H 44 C 49 31, 48 24, 45 24 Z "
+    "M 39 35 V 42 H 45 C 49 42, 49 35, 45 35 Z"
+)
+# Measured ink bounds of that path in its 64-unit viewBox: x[8.50, 54.90]
+# y[18.50, 47.50]. Its center is (31.70, 33.00), which is NOT the canvas
+# center, so it needs recentering as well as scaling.
+MONO_CENTER = (31.70, 33.00)
+MONO_INK_HEIGHT = 29.00
+MONO_TARGET_HEIGHT = 72.0
+MONO_CENTER_AT = (600.0, 209.5)
+
+# Lines are centered, unlike the page, which is left-aligned: unfurlers crop
+# toward the center (X to roughly 2:1, compact Slack and iMessage to a square),
+# which guillotines left-aligned text. Everything stays inside the centered
+# 630x630 square, x[285, 915].
+#
+# The wordmark is at full opacity where the live page's brightest element is
+# 70%. That faintness reads as intentional at full size and as a rendering
+# failure in a feed thumbnail.
+#
+# Baselines were tuned by rendering and measuring the rasterized ink bounds,
+# then shifting the whole block to center it on the canvas. When re-measuring,
+# detect ink as "differs from the background" rather than "is bright": the
+# bottom line sits at 35% alpha, which composites to about rgb(104, 97, 91),
+# and a brightness threshold silently drops it -- which makes a block that is
+# really 28px low look perfectly centered.
+LINES = [
+    ("Eric Buth", 76.0, 339.5, 1.0),
+    ("Software Engineer in NYC", 34.0, 393.5, 0.5),
+    ("buth.dev", 24.0, 455.5, 0.35),
+]
+
+ICO_SIZES = (16, 32, 48)
+
+
+def outline(font, ttf_bytes, text, size, baseline, center_x):
+    """Shape `text` with HarfBuzz and return it as one SVG path `d` string."""
+    upem = font["head"].unitsPerEm
+    hb_font = hb.Font(hb.Face(hb.Blob(ttf_bytes)))
+    hb_font.scale = (upem, upem)
+
+    buf = hb.Buffer()
+    buf.add_str(text)
+    buf.guess_segment_properties()
+    hb.shape(hb_font, buf)
+
+    scale = size / upem
+    advance = sum(p.x_advance for p in buf.glyph_positions) * scale
+    pen_x = center_x - advance / 2
+
+    glyphs = font.getGlyphSet()
+    svg_pen = SVGPathPen(glyphs)
+    for info, pos in zip(buf.glyph_infos, buf.glyph_positions):
+        name = font.getGlyphName(info.codepoint)
+        # Flip the y axis (font units are y-up, SVG y-down) and place the glyph
+        # at the current pen position on the baseline.
+        tx = pen_x + pos.x_offset * scale
+        ty = baseline - pos.y_offset * scale
+        glyphs[name].draw(TransformPen(svg_pen, Transform(scale, 0, 0, -scale, tx, ty)))
+        pen_x += pos.x_advance * scale
+
+    return svg_pen.getCommands()
+
+
+def build_og_svg():
+    """Write assets/og.svg with all text converted to outlines."""
+    mono_scale = MONO_TARGET_HEIGHT / MONO_INK_HEIGHT
+    mono_tx = MONO_CENTER_AT[0] - mono_scale * MONO_CENTER[0]
+    mono_ty = MONO_CENTER_AT[1] - mono_scale * MONO_CENTER[1]
+
+    parts = [
+        "<!--",
+        "  GENERATED by assets/build.py. Do not hand-edit; change the script.",
+        "  Text is baked to outlines, so this file needs no font to render.",
+        "-->",
+        f'<svg width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}"'
+        ' xmlns="http://www.w3.org/2000/svg">',
+        f'\t<rect width="{WIDTH}" height="{HEIGHT}" fill="{GROUND}" />',
+        f'\t<g transform="translate({mono_tx:.3f} {mono_ty:.3f}) scale({mono_scale:.5f})">',
+        f'\t\t<path d="{MONOGRAM}" fill="{INK}" stroke="{INK}" fill-rule="evenodd"'
+        ' stroke-linejoin="round" stroke-width="1" />',
+        "\t</g>",
+    ]
+
+    # The glyph set reads glyf/loca lazily through the font's open file handle,
+    # so the whole build has to happen inside the context manager.
+    with TTFont(WOFF2) as font:
+        font.flavor = None
+        buf = io.BytesIO()
+        font.save(buf)
+        ttf_bytes = buf.getvalue()
+
+        for text, size, baseline, opacity in LINES:
+            d = outline(font, ttf_bytes, text, size, baseline, WIDTH / 2)
+            attrs = f'fill="{INK}"'
+            if opacity != 1.0:
+                attrs += f' fill-opacity="{opacity}"'
+            parts.append(f"\t<!-- {text} -->")
+            parts.append(f'\t<path {attrs} d="{d}" />')
+
+    parts.append("</svg>")
+
+    out = ASSETS / "og.svg"
+    out.write_text("\n".join(parts) + "\n")
+    return out
+
+
+def rasterize(src, width, height, dest, workdir):
+    """Render `src` to `dest`, via a scratch file so `dest` is never partial.
+
+    rsvg-convert truncates its output before it starts rendering, so writing
+    straight into docs/ would leave a zero-byte image in the published tree if
+    it failed or was interrupted.
+    """
+    scratch = workdir / dest.name
+    subprocess.run(
+        ["rsvg-convert", "-w", str(width), "-h", str(height), str(src), "-o", str(scratch)],
+        check=True,
+    )
+    os.replace(scratch, dest)
+    return dest
+
+
+def pack_ico(pngs, dest, workdir):
+    """Write a multi-size .ico wrapping PNG payloads.
+
+    ICO is a 6-byte header, one 16-byte directory entry per image, then the
+    payloads. Storing PNG rather than BMP is supported by every browser from
+    IE11 onward and keeps the file small.
+    """
+    payloads = [(size, path.read_bytes()) for size, path in pngs]
+    offset = 6 + 16 * len(payloads)
+    header = struct.pack("<HHH", 0, 1, len(payloads))
+    entries, blobs = b"", b""
+    for size, data in payloads:
+        # A dimension of 256 is stored as 0; these are all smaller, but keep the
+        # rule explicit so the packer stays correct if a larger size is added.
+        dim = 0 if size == 256 else size
+        entries += struct.pack("<BBBBHHII", dim, dim, 0, 0, 1, 32, len(data), offset)
+        offset += len(data)
+        blobs += data
+
+    scratch = workdir / dest.name
+    scratch.write_bytes(header + entries + blobs)
+    os.replace(scratch, dest)
+    return dest
+
+
+def main():
+    svg = build_og_svg()
+    print(f"wrote {svg.relative_to(ROOT)} ({svg.stat().st_size} bytes)")
+
+    # Scratch space for part-built files, so nothing half-written lands in the
+    # published tree. It has to sit under ROOT rather than $TMPDIR: os.replace
+    # is only atomic within a filesystem, and a $TMPDIR on a different volume
+    # (a tmpfs /tmp on Linux, say) would fail with EXDEV on the first rename.
+    with tempfile.TemporaryDirectory(prefix=".build-", dir=ROOT) as raw:
+        work = pathlib.Path(raw)
+
+        png = rasterize(svg, WIDTH, HEIGHT, DOCS / "og.png", work)
+        print(f"wrote {png.relative_to(ROOT)} ({png.stat().st_size} bytes)")
+
+        touch = rasterize(ASSETS / "icon-touch.svg", 180, 180, DOCS / "apple-touch-icon.png", work)
+        print(f"wrote {touch.relative_to(ROOT)} ({touch.stat().st_size} bytes)")
+
+        sized = []
+        for size in ICO_SIZES:
+            dest = work / f"icon-{size}.png"
+            subprocess.run(
+                ["rsvg-convert", "-w", str(size), "-h", str(size), str(ASSETS / "icon.svg"),
+                 "-o", str(dest)],
+                check=True,
+            )
+            sized.append((size, dest))
+        ico = pack_ico(sized, DOCS / "favicon.ico", work)
+        print(f"wrote {ico.relative_to(ROOT)} ({ico.stat().st_size} bytes, sizes {ICO_SIZES})")
+
+
+if __name__ == "__main__":
+    main()
