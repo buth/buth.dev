@@ -1,8 +1,8 @@
 # buth.dev
 
 Single-page personal site. There is no build step: `docs/index.html` is the
-deployed artifact, with its CSS inline and no JavaScript. The page loads exactly
-two things, both same-origin: itself and one font.
+deployed artifact, with its CSS inline and no JavaScript. Every request the
+page makes is same-origin: itself, one font, and a favicon.
 
 ## Deploy
 
